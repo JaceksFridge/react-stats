@@ -1,10 +1,8 @@
 
 def ahoy():
     print("Ahoy Eddison")
-    print("Ahoy Eddison")
-    print("Ahoy Eddison")
-    print("Ahoy Eddison")
-    print("Ahoy Eddison")
+    return "Ahoy Eddison"
+
     
     
 def main():

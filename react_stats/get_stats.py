@@ -44,8 +44,6 @@ exclude_dirs = [
     ".npm"
 ]
 
-
-
 def main():
     
     path = os.getcwd()
@@ -54,20 +52,22 @@ def main():
     
     for dirpath, dirnames, filenames in os.walk(path):
         
+        dirnames[:] = [dir for dir in dirnames if dir not in exclude_dirs]
+        os.chdir(dirpath)
+        
         if any(excluded in dirpath for excluded in exclude_dirs):
-            print(f"SKIP --- DIR --- {dirpath}")
             continue
         else:
             os.chdir(dirpath)
             for file in filenames:
+                
                 _, ext = os.path.splitext(file)
                 if ext not in exts_tresor:
-                    print(f"SKIP --- FILE ---{file}")
                     continue
                 else:
-                    print(f"CORRECT ---- {file}")
-                    file_tresor.append([file, count_lines(file), exts_tresor[ext]])
-                    hook_count = count_hooks(file)
+                    line_count, hook_count = count_hooks_and_lines(file)
+                    file_tresor.append([file, line_count, exts_tresor[ext]])
+
                     if hook_count['all hooks'] == 0:
                         continue
                     else:
@@ -77,7 +77,7 @@ def main():
     og_length = len(file_tresor)
     file_tresor = sorted(file_tresor, key=lambda x: x[1], reverse=True)[:table_size]
     cs_length = len(file_tresor)
-    hook_tresor = sorted(hook_tresor, key=lambda x: x[0], reverse=True)
+    hook_tresor = sorted(hook_tresor, key=lambda x: x[1], reverse=True)
     
     
     lang_df = make_lang_df(file_tresor)
@@ -97,26 +97,72 @@ def get_directory_size(start_path="."):
     return total_size
     
 
-def count_lines(file):
-    count = 0
+def count_hooks_and_lines(file_path):
+    
+    line_count = 0
+    filename = os.path.basename(file_path)
+    
+    hook_count = {
+        "file": filename,
+        "all hooks": 0,
+        "useState": 0,
+        "useEffect": 0,
+        "useContext": 0,
+        "otherHooks": 0,
+        "customHooks": 0
+    }
+    hook_patterns = {
+        "useState": r"const\s+\[\s*(.*?),\s*(.*?)\s*\]\s*=\s*useState\((.*?)\)",
+        "useEffect": r"useEffect\(\s*\(\)\s*=>\s*\{(?:[^}]+|\n)+\}(,\s*\[.*?\]\s*)?\)",
+        "useContext": r"const\s*([\w\s{},]+)\s*=\s*useContext\(\s*[-a-zA-Z0-9_]+\s*\)",
+        "otherHooks": r"\buse(?!State\b|Effect\b|Context\b)(Callback|DebugValue|DeferredValue|Id|ImperativeHandle|InsertionEffect|LayoutEffect|Memo|Reducer|Ref|SyncExternalStore|Transition)\b",
+        "customHooks": r"\buse(?!State\b|Effect\b|Context\b|Callback\b|DebugValue\b|DeferredValue\b|Id\b|ImperativeHandle\b|InsertionEffect\b|LayoutEffect\b|Memo\b|Reducer\b|Ref\b|SyncExternalStore\b|Transition\b)[A-Z]\w+\("
+    }
+    
     try:
-        rawdata = open(file, "rb").read()
-        encoding_result = chardet.detect(rawdata)
-        charenc = encoding_result['encoding']
-
-        with open(file, "r", encoding=charenc) as open_file:
-            for line in open_file:
+        with open(file_path, "r", encoding="utf-8") as file:
+            print("looping throgh file", filename)
+            for line in file:
+                
                 if line.strip() == "":
                     continue
                 elif line.startswith("#"):
                     continue
+                elif line.startswith("//"):
+                    continue
+                elif line.startswith("/*"):
+                    continue
                 else:
-                    count += 1
+                    
+                    line_count += 1
+                    for hook, pattern in hook_patterns.items():
+                        
+                        try:
+                            matches = re.findall(pattern, line)
+                            
+                            hook_count[hook] += len(matches)
+                            hook_count['all hooks'] += len(matches)
+                            
+                        except Exception as e:
+                            print(f"Error in count_hooks for {file}: {e}")
+            
+            # print(f"line count: {line_count}")              
+            # print(hook_count)
+                
+    except UnicodeDecodeError:
+        print(f"Could not decode {file_path}. Skipping...")
+        
+    except FileNotFoundError:
+        print(f"File {file_path} not found. Skipping...")
+        
+    except PermissionError:
+        print(f"No permission to read {file_path}. Skipping...")
+        
     except Exception as e:
-        print(f"Error reading file {file}: {e}")
-        return 0
+        print(f"An unknown error occurred while reading {file_path}: {e}")
 
-    return count
+    return line_count, hook_count
+
 
 
 
@@ -137,14 +183,14 @@ def make_lang_df(file_tresor):
 
 
 def make_stat_file(path, files_table, hooks_table, lang_chart, og_length, cs_length):
+
     stats_path = os.path.join(path, "stats.txt")
     with open(stats_path, "w") as stats_file:
         stats_file.write("\n\n")
         stats_file.write(lang_chart)
         stats_file.write("\n\n") 
         stats_file.write(files_table)
-        stats_file.write(f"\n\n * showing {cs_length}/{og_length} files")
-        stats_file.write("\n * run 'change_table' to change view")
+        stats_file.write(f"\n * showing {cs_length}/{og_length} files")
         stats_file.write("\n\n")
         stats_file.write("\n\n")
         stats_file.write(hooks_table)
@@ -172,42 +218,10 @@ def make_lang_chart(lang_df):
     return new_stdout.getvalue()
 
 
-def count_hooks(file):        
-    hook_count = {
-        "all hooks": 0
-    }
-    hook_patterns = {
-        "useState": r"const \[\w+\s*,\s*\w+\]\s*\=\s*useState\([^)]*\)",
-        "useEffect": r"useEffect\(\s*\(\)\s*=>\s*\{(?:[^}]+|\n)+\}(,\s*\[.*?\]\s*)?\)",
-        "useContext": r"const\s*([\w\s{},]+)\s*=\s*useContext\(\s*[-a-zA-Z0-9_]+\s*\)",
-        "otherHooks": r"\buse(?!State\b|Effect\b|Context\b)(Callback|DebugValue|DeferredValue|Id|ImperativeHandle|InsertionEffect|LayoutEffect|Memo|Reducer|Ref|SyncExternalStore|Transition)\b",
-        "customHooks": r"\buse(?!State\b|Effect\b|Context\b|Callback\b|DebugValue\b|DeferredValue\b|Id\b|ImperativeHandle\b|InsertionEffect\b|LayoutEffect\b|Memo\b|Reducer\b|Ref\b|SyncExternalStore\b|Transition\b)[A-Z]\w+\("
-    }
-    
-    try:
-        with open(file, "r", encoding='utf-8') as file:
-            content = file.read()
-            
-    except UnicodeDecodeError:
-        print(f"Could not decode {file}. Skipping...")
-        return {'all hooks': 0}
-    
-    except Exception as e:
-        print(f"Error reading file {file}: {e}")
-        return {'all hooks': 0}
-        
-        
-    for hook, pattern in hook_patterns.items():
-        matches = re.findall(pattern, content)
-        hook_count[hook] = len(matches)
-        hook_count["all hooks"] += len(matches)
-        
-    return hook_count
-
 
 # Hooks Table
 def make_hooks_table(hook_tresor):
-    headers =["all hooks","useState","useEffect","useContext","otherHooks","customHooks"]
+    headers =["file", "all hooks","useState","useEffect","useContext","otherHooks","customHooks"]
     table = tabulate(hook_tresor, headers, tablefmt="presto")
     return table
 
