@@ -121,7 +121,6 @@ def count_hooks_and_lines(file_path):
     
     try:
         with open(file_path, "r", encoding="utf-8") as file:
-            print("looping throgh file", filename)
             for line in file:
                 
                 if line.strip() == "":

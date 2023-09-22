@@ -8,7 +8,6 @@ react_stats/exts.py
 react_stats/get_stats.py
 react_stats/languages.json
 react_stats/make_assets.py
-react_stats/printr.py
 react_stats.egg-info/PKG-INFO
 react_stats.egg-info/SOURCES.txt
 react_stats.egg-info/dependency_links.txt

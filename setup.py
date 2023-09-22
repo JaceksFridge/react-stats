@@ -1,12 +1,16 @@
 from setuptools import setup, find_packages
 
+with open('README.md', 'r', encoding='utf-8') as f:
+    long_description = f.read()
+
 setup(
     name="react_stats",
-    version="0.76",
+    version="0.85",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     packages=find_packages(),
     entry_points={
         "console_scripts": [
-            "printr = react_stats.printr:main",
             "ahoy = react_stats.ahoy:main",
             "make-assets = react_stats.make_assets:main",
             "auto-assets = react_stats.auto_assets:main",
