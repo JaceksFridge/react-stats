@@ -1,0 +1,31 @@
+
+
+Python   | 71.62% ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░
+Markdown |  22.2% ▓▓▓▓░░░░░░░░░░░░░░░░
+Text     |  6.18% ▓░░░░░░░░░░░░░░░░░░░
+                                  100%
+
+
+====================  =======  ==========
+files                   lines  language
+====================  =======  ==========
+get_stats.py              175  Python
+README.md                  97  Markdown
+auto_assets.py             43  Python
+make_assets.py             42  Python
+setup.py                   26  Python
+exts.py                    20  Python
+SOURCES.txt                16  Text
+ahoy.py                     7  Python
+entry_points.txt            5  Text
+requires.txt                5  Text
+top_level.txt               1  Text
+__init__.py                 0  Python
+dependency_links.txt        0  Text
+====================  =======  ==========
+ * showing 13/13 files
+
+
+
+ file   | all hooks   | useState   | useEffect   | useContext   | otherHooks   | customHooks
+--------+-------------+------------+-------------+--------------+--------------+---------------
