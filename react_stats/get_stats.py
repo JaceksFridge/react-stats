@@ -49,6 +49,7 @@ def main():
     path = os.getcwd()
     file_tresor = []
     hook_tresor = []
+    total_lines = 0
     
     for dirpath, dirnames, filenames in os.walk(path):
         
@@ -67,6 +68,7 @@ def main():
                 else:
                     line_count, hook_count = count_hooks_and_lines(file)
                     file_tresor.append([file, line_count, exts_tresor[ext]])
+                    total_lines += line_count
 
                     if hook_count['all hooks'] == 0:
                         continue
@@ -84,7 +86,7 @@ def main():
     lang_chart = make_lang_chart(lang_df)
     hooks_table = make_hooks_table(hook_tresor)
     files_table = make_files_table(file_tresor)
-    stat_file = make_stat_file(path, files_table, hooks_table, lang_chart, og_length, cs_length)
+    stat_file = make_stat_file(path, files_table, hooks_table, lang_chart, og_length, cs_length, total_lines)
     
 
 def get_directory_size(start_path="."):
@@ -181,7 +183,7 @@ def make_lang_df(file_tresor):
     return lang_df
 
 
-def make_stat_file(path, files_table, hooks_table, lang_chart, og_length, cs_length):
+def make_stat_file(path, files_table, hooks_table, lang_chart, og_length, cs_length, total_lines):
 
     stats_path = os.path.join(path, "stats.txt")
     with open(stats_path, "w") as stats_file:
@@ -193,6 +195,10 @@ def make_stat_file(path, files_table, hooks_table, lang_chart, og_length, cs_len
         stats_file.write("\n\n")
         stats_file.write("\n\n")
         stats_file.write(hooks_table)
+        stats_file.write("\n\n")
+        stats_file.write("\n\n")
+        stats_file.write(f"Total Files: {og_length} \n")
+        stats_file.write(f"Total Lines: {total_lines}")
 
  
 

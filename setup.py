@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name="react_stats",
-    version="0.85",
+    version="0.86",
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=find_packages(),
